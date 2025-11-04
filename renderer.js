@@ -1,65 +1,64 @@
-const categories = {
-  frutas: ["maçã", "banana", "laranja", "uva", "pera"],
-  limpeza: ["sabão", "detergente", "desinfetante"],
-  bebidas: ["água", "sumo", "refrigerante", "café"],
-};
+document.addEventListener("DOMContentLoaded", () => {
+  const itemInput = document.getElementById("itemInput");
+  const addBtn = document.getElementById("addBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const listDiv = document.getElementById("list");
+  const toast = document.getElementById("toast");
 
-const itemInput = document.getElementById("itemInput");
-const addBtn = document.getElementById("addBtn");
-const clearBtn = document.getElementById("clearBtn");
-const listDiv = document.getElementById("list");
+  let list = JSON.parse(localStorage.getItem("list")) || [];
 
-let lista = JSON.parse(localStorage.getItem("lista")) || {};
-
-function getCategoria(item) {
-  const nome = item.toLowerCase();
-  for (const cat in categories) {
-    if (categories[cat].includes(nome)) return cat;
-  }
-  return "outros";
-}
-
-function renderLista() {
-  listDiv.innerHTML = "";
-  for (const cat in lista) {
-    const catDiv = document.createElement("div");
-    catDiv.className = "category";
-    catDiv.innerHTML = `<h3>${cat.toUpperCase()}</h3>`;
-    lista[cat].forEach((item, index) => {
+  function renderList() {
+    listDiv.innerHTML = "";
+    list.forEach((item, index) => {
       const p = document.createElement("p");
-      p.textContent = item;
-      p.onclick = () => removeItem(cat, index);
-      catDiv.appendChild(p);
+      p.textContent = `• ${item}`;
+
+      const removeBtn = document.createElement("span");
+      removeBtn.textContent = "✖";
+      removeBtn.onclick = () => removeItem(index);
+
+      p.appendChild(removeBtn);
+      listDiv.appendChild(p);
     });
-    listDiv.appendChild(catDiv);
   }
-}
 
-function addItem() {
-  const item = itemInput.value.trim();
-  if (!item) return;
-  const cat = getCategoria(item);
-  if (!lista[cat]) lista[cat] = [];
-  lista[cat].push(item);
-  localStorage.setItem("lista", JSON.stringify(lista));
-  itemInput.value = "";
-  renderLista();
-}
+  function showToast(message) {
+    toast.textContent = message;
+    toast.classList.remove("hidden");
+    setTimeout(() => toast.classList.add("hidden"), 2000);
+  }
 
-function removeItem(cat, index) {
-  lista[cat].splice(index, 1);
-  if (lista[cat].length === 0) delete lista[cat];
-  localStorage.setItem("lista", JSON.stringify(lista));
-  renderLista();
-}
+  function addItem() {
+    const item = itemInput.value.trim();
+    if (!item) return;
 
-function clearAll() {
-  lista = {};
-  localStorage.removeItem("lista");
-  renderLista();
-}
+    list.push(item); 
+    localStorage.setItem("list", JSON.stringify(list));
+    itemInput.value = "";
+    renderList();
+    showToast("Item added!");
+  }
 
-addBtn.onclick = addItem;
-clearBtn.onclick = clearAll;
+  function removeItem(index) {
+    list.splice(index, 1);
+    localStorage.setItem("list", JSON.stringify(list));
+    renderList();
+    showToast("Item removed");
+  }
 
-renderLista();
+  function clearAll() {
+    list = [];
+    localStorage.removeItem("list");
+    renderList();
+    showToast("All cleared");
+  }
+
+  addBtn.addEventListener("click", addItem);
+  clearBtn.addEventListener("click", clearAll);
+
+  itemInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") addItem();
+  });
+
+  renderList();
+});
